@@ -3,11 +3,11 @@ version: "3.8"
 services:
   app:
     build: .
+    container_name: markdown-blog-ci
     ports:
-      - "3000:3000"
+      - "3001:3000"     # Port changed from 3000 -> 3001
+    volumes:
+      - .:/usr/src/app  # Mount code directory
     env_file:
       - .env
     restart: always
-
-    
-

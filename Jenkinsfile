@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        COMPOSE_PROJECT_NAME = 'markdown_blog_pipeline'
+        CONTAINER_NAME = 'markdown-blog-ci'
+        APP_PORT = '3001'
+    }
+
     stages {
         stage('Checkout SCM') {
             steps {
@@ -8,17 +14,22 @@ pipeline {
             }
         }
 
-        stage('Clean up CI container') {
+        stage('Clean up old container') {
             steps {
                 sh '''
-                    docker rm -f markdown-blog-ci || true
+                    echo "Stopping and removing old container..."
+                    docker rm -f $CONTAINER_NAME || true
+                    docker-compose -p $COMPOSE_PROJECT_NAME down || true
                 '''
             }
         }
 
-        stage('Build & Run CI Container') {
+        stage('Build & Run New Container') {
             steps {
-                sh 'docker-compose -p markdown_blog_pipeline up -d --build'
+                sh '''
+                    echo "Building and starting container..."
+                    docker-compose -p $COMPOSE_PROJECT_NAME up -d --build
+                '''
             }
         }
     }
@@ -28,10 +39,10 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build completed successfully!'
+            echo 'Build and deployment successful! App is live on port 3001.'
         }
         failure {
-            echo 'Build failed. Check logs for details.'
+            echo 'Pipeline failed. Check logs above.'
         }
     }
 }
