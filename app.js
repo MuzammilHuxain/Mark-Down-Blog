@@ -9,7 +9,7 @@ const authRouter = require("./routes/auth");
 const methodOverride = require("method-override");
 
 const app = express();
-
+consloe.log("hi");
 const PORT = process.env.PORT || 3000;
 mongoose
   .connect(process.env.MONGO_URI, {
