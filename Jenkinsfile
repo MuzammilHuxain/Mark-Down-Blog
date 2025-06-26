@@ -35,7 +35,7 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
-                    timeout 30 bash -c 'until curl -f http://localhost:3001 > /dev/null 2>&1; do sleep 2; done'
+                    timeout 30 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
                 '''
             }
         }
