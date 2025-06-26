@@ -1,12 +1,17 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.options import Options
 import time
 
-# Initialize WebDriver
-driver = webdriver.Chrome()
-driver.get("http://localhost:3000")
+# Headless setup for EC2
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+
+driver = webdriver.Chrome(options=options)
 driver.maximize_window()
+driver.get("http://localhost:3000")
 
 # Summary counters
 passed = 0
