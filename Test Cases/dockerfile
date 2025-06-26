@@ -1,25 +1,29 @@
-FROM python:3.11
+FROM python:3.11-slim
 
-# Install Chrome
-RUN apt-get update && apt-get install -y \
-    wget curl unzip gnupg ca-certificates lsb-release && \
-    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux.gpg && \
-    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
-    > /etc/apt/sources.list.d/google.list && \
-    apt-get update && apt-get install -y google-chrome-stable
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install ChromeDriver matching Chrome version
-RUN CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') && \
-    DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}") && \
-    wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip" && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin && chmod +x /usr/local/bin/chromedriver && rm /tmp/chromedriver.zip
+# Install dependencies and Chromium
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget curl unzip gnupg ca-certificates \
+    libnss3 libxss1 libappindicator3-1 libasound2 \
+    libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 \
+    libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+    libu2f-udev chromium \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# ✅ Install matching ChromeDriver manually (you can change the version here if needed)
+RUN wget -O /tmp/chromedriver.zip https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/137.0.7151.103/linux64/chromedriver-linux64.zip && \
+    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm -rf /tmp/chromedriver.zip /usr/local/bin/chromedriver-linux64
+
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
+
+WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy and run test script
-COPY selenium_test.py /app/selenium_test.py
-WORKDIR /app
+COPY . .
 
 CMD ["python", "selenium_test.py"]
