@@ -40,20 +40,23 @@ pipeline {
             }
         }
 
-        stage('Run Selenium Test Cases') {
-            steps {
-                sh '''
-                    echo "Building Selenium Test Runner Docker Image..."
-                    docker build -t $TEST_IMAGE -f TestCase/Dockerfile ./TestCase
+      stage('Run Selenium Test Cases') {
+    steps {
+        dir('TestCase') {
+            sh '''
+                echo "Building Selenium Test Runner Docker Image..."
+                docker build -t selenium-test-runner .
 
-                    echo "Waiting before running tests..."
-                    sleep 5
+                echo "Waiting before running tests..."
+                sleep 5
 
-                    echo "Running Selenium tests in container..."
-                    docker run --network host --rm $TEST_IMAGE
-                '''
-            }
+                echo "Running Selenium tests in container..."
+                docker run --network host --rm selenium-test-runner
+            '''
         }
+    }
+}
+
     }
 
     post {
