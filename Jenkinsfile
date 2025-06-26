@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
+        APP_PORT = '3000'
         TEST_IMAGE = 'selenium-test-runner'
+        TEST_DIR = 'Test Cases'
     }
 
     stages {
@@ -23,11 +25,11 @@ pipeline {
             }
         }
 
-        stage('Build & Run Node App') {
+        stage('Build & Run App Container') {
             steps {
                 sh '''
                     docker-compose -p markdown_blog_pipeline up -d --build --remove-orphans
-                    sleep 10  # Allow app to fully start
+                    sleep 10
                 '''
             }
         }
@@ -35,29 +37,28 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
-                    timeout 30 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do sleep 2; done'
+                    echo "Waiting for app to be live on port $APP_PORT..."
+                    timeout 30 bash -c 'until curl -f http://localhost:$APP_PORT > /dev/null 2>&1; do sleep 2; done'
                 '''
             }
         }
 
- stage('Run Selenium Test Cases') {
-    steps {
-        dir('Test Cases') {
-            sh '''
-                echo "Building Selenium Test Runner Docker Image..."
-                docker build -t selenium-test-runner .
+        stage('Run Selenium Test Cases') {
+            steps {
+                dir("${TEST_DIR}") {
+                    sh '''
+                        echo "Building Selenium Test Runner Docker Image..."
+                        docker build -t $TEST_IMAGE -f dockerfile .
 
-                echo "Waiting before running tests..."
-                sleep 5
+                        echo "Waiting before running tests..."
+                        sleep 5
 
-                echo "Running Selenium tests in container..."
-                docker run --network host --rm selenium-test-runner
-            '''
+                        echo "Running Selenium tests in container..."
+                        docker run --network host --rm $TEST_IMAGE
+                    '''
+                }
+            }
         }
-    }
-}
-
-
     }
 
     post {
@@ -65,7 +66,7 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo '✅ Build and Tests completed successfully.'
+            echo '✅ Build and Test succeeded!'
         }
         failure {
             echo '❌ Something went wrong during build or testing.'
