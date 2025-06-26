@@ -11,7 +11,7 @@ options.add_argument('--disable-dev-shm-usage')
 
 driver = webdriver.Chrome(options=options)
 driver.maximize_window()
-driver.get("http://localhost:3001")
+driver.get("http://localhost:3000")
 
 # Summary counters
 passed = 0
@@ -31,13 +31,13 @@ def print_result(name, success):
         results.append(f"❌ {name}")
 
 def login(email, password):
-    driver.get("http://localhost:3001/auth/login")
+    driver.get("http://localhost:3000/auth/login")
     driver.find_element(By.ID, "email").send_keys(email)
     driver.find_element(By.ID, "password").send_keys(password)
     driver.find_element(By.TAG_NAME, "form").submit()
 
 def signup(full_name, email, password):
-    driver.get("http://localhost:3001/auth/signup")
+    driver.get("http://localhost:3000/auth/signup")
     driver.find_element(By.ID, "fullName").send_keys(full_name)
     driver.find_element(By.ID, "email").send_keys(email)
     driver.find_element(By.ID, "password").send_keys(password)
@@ -56,7 +56,7 @@ def test_signup():
 
 def test_logout():
     try:
-        driver.get("http://localhost:3001/auth/logout")
+        driver.get("http://localhost:3000/auth/logout")
         time.sleep(1)
         print_result("Logout after signup", True)
     except:
@@ -72,7 +72,7 @@ def test_login():
 
 def test_new_article_page():
     try:
-        driver.get("http://localhost:3001/articles/new")
+        driver.get("http://localhost:3000/articles/new")
         time.sleep(1)
         assert "New Article" in driver.page_source
         print_result("Navigate to New Article page", True)
@@ -114,7 +114,7 @@ def test_edit_article():
 
 def test_delete_article():
     try:
-        driver.get("http://localhost:3001/")
+        driver.get("http://localhost:3000/")
         time.sleep(1)
         driver.find_element(By.XPATH, "//form/button[contains(text(), 'Delete')]").click()
         time.sleep(2)
@@ -125,7 +125,7 @@ def test_delete_article():
 
 def test_logout_again():
     try:
-        driver.get("http://localhost:3001/auth/logout")
+        driver.get("http://localhost:3000/auth/logout")
         time.sleep(1)
         print_result("Logout after editing", True)
     except:
@@ -133,7 +133,7 @@ def test_logout_again():
 
 def test_protected_access():
     try:
-        driver.get("http://localhost:3001/articles")
+        driver.get("http://localhost:3000/articles")
         time.sleep(1)
         assert "Login" in driver.page_source or "Sign Up" in driver.page_source
         print_result("Protected route access without login", True)
