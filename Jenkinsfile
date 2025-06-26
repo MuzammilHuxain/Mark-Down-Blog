@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        TEST_IMAGE = 'selenium-test-runner'
+    }
+
     stages {
         stage('Checkout SCM') {
             steps {
@@ -11,30 +15,19 @@ pipeline {
         stage('Stop and Clean Previous Containers') {
             steps {
                 sh '''
-                    # Stop and remove containers from the project
                     docker-compose -p markdown_blog_pipeline down --remove-orphans || true
-                    
-                    # Clean up any dangling containers with the same name
                     docker rm -f markdown_blog_pipeline_app_1 || true
                     docker rm -f markdown-blog-ci || true
-                    
-                    # Optional: Clean up dangling images and volumes
                     docker system prune -f || true
                 '''
             }
         }
 
-        stage('Build & Run New Container') {
+        stage('Build & Run Node App') {
             steps {
                 sh '''
-                    # Build and start the new container
                     docker-compose -p markdown_blog_pipeline up -d --build --remove-orphans
-                    
-                    # Wait a moment for the container to start
-                    sleep 5
-                    
-                    # Verify the container is running
-                    docker-compose -p markdown_blog_pipeline ps
+                    sleep 10  # Allow app to fully start
                 '''
             }
         }
@@ -42,8 +35,22 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
-                    # Check if the application is responding
-                    timeout 30 bash -c 'until curl -f http://localhost:3001 > /dev/null 2>&1; do sleep 2; done' || echo "Warning: App might not be fully ready yet"
+                    timeout 30 bash -c 'until curl -f http://localhost:3001 > /dev/null 2>&1; do sleep 2; done'
+                '''
+            }
+        }
+
+        stage('Run Selenium Test Cases') {
+            steps {
+                sh '''
+                    echo "Building Selenium Test Runner Docker Image..."
+                    docker build -t $TEST_IMAGE -f TestCase/Dockerfile ./TestCase
+
+                    echo "Waiting before running tests..."
+                    sleep 5
+
+                    echo "Running Selenium tests in container..."
+                    docker run --network host --rm $TEST_IMAGE
                 '''
             }
         }
@@ -54,14 +61,11 @@ pipeline {
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Build completed successfully! App is running on port 3001.'
+            echo '✅ Build and Tests completed successfully.'
         }
         failure {
-            echo 'Build failed. Check logs for details.'
-            sh '''
-                # Show logs for debugging
-                docker-compose -p markdown_blog_pipeline logs --tail=50 || true
-            '''
+            echo '❌ Something went wrong during build or testing.'
+            sh 'docker-compose -p markdown_blog_pipeline logs --tail=50 || true'
         }
     }
 }
