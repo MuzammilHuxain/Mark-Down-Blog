@@ -40,9 +40,9 @@ pipeline {
             }
         }
 
-      stage('Run Selenium Test Cases') {
+ stage('Run Selenium Test Cases') {
     steps {
-        dir('TestCase') {
+        dir('Test Cases') {
             sh '''
                 echo "Building Selenium Test Runner Docker Image..."
                 docker build -t selenium-test-runner .
@@ -56,6 +56,7 @@ pipeline {
         }
     }
 }
+
 
     }
 
